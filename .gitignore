@@ -1,0 +1,20 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Local parity-check artefacts (the upstream pdfid.py is downloaded, never committed)
+.pdfid/
+tests/parity/.output/
+
+# Editors and OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.log
+
+# Never commit local environment files
+.env
+.env.*

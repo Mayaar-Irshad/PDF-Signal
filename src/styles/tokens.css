@@ -1,0 +1,110 @@
+/*
+ * Design tokens. Colors are chosen for WCAG 2.2 AA contrast against their intended
+ * backgrounds in both themes. Severity colors never imply "safe": the neutral level for
+ * "no indicators detected" is slate, not green.
+ */
+:root {
+  color-scheme: light dark;
+
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono:
+    ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: clamp(1.9rem, 1.4rem + 2vw, 2.6rem);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --content-width: 72rem;
+
+  /* Light theme */
+  --color-bg: #f4f6f8;
+  --color-surface: #ffffff;
+  --color-surface-raised: #fbfcfd;
+  --color-surface-sunken: #eef1f4;
+  --color-border: #d5dbe1;
+  --color-border-strong: #aab4bf;
+  --color-text: #141a21;
+  --color-text-muted: #4a5663;
+  --color-text-subtle: #5d6a77;
+  --color-accent: #0b7a6e;
+  --color-accent-strong: #075e55;
+  --color-accent-soft: #e0f3f0;
+  --color-accent-contrast: #ffffff;
+  --color-focus: #1a5fd6;
+
+  --color-info: #1f5fbf;
+  --color-info-soft: #e5eefb;
+  --color-neutral: #42505e;
+  --color-neutral-soft: #e9edf1;
+  --color-review: #8a5300;
+  --color-review-soft: #fdf1dc;
+  --color-priority: #a94a07;
+  --color-priority-soft: #fdf0e5;
+  --color-priority-contrast: #ffffff;
+  --color-input-border: #7b8794;
+  --color-danger: #b3261e;
+  --color-danger-strong: #8f1d17;
+  --color-danger-soft: #fbe7e5;
+  --color-danger-contrast: #ffffff;
+  --color-inconclusive: #5b4a8a;
+  --color-inconclusive-soft: #eeeaf8;
+
+  --shadow-sm: 0 1px 2px rgb(16 24 32 / 0.06);
+  --shadow-md: 0 4px 16px rgb(16 24 32 / 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0c1116;
+    --color-surface: #131a21;
+    --color-surface-raised: #18212a;
+    --color-surface-sunken: #0f151b;
+    --color-border: #2a3540;
+    --color-border-strong: #43515e;
+    --color-text: #e6ebf0;
+    --color-text-muted: #a9b5c1;
+    --color-text-subtle: #93a0ad;
+    --color-accent: #3dd4bf;
+    --color-accent-strong: #6fe3d3;
+    --color-accent-soft: #10302d;
+    --color-accent-contrast: #04211e;
+    --color-focus: #7fb0ff;
+
+    --color-info: #8ab4f8;
+    --color-info-soft: #172a45;
+    --color-neutral: #b6c2ce;
+    --color-neutral-soft: #222c36;
+    --color-review: #f2b84b;
+    --color-review-soft: #33260d;
+    --color-priority: #ffb27a;
+    --color-priority-soft: #382413;
+    --color-priority-contrast: #2b1405;
+    --color-input-border: #76848f;
+    --color-danger: #ff8a80;
+    --color-danger-strong: #ffb4ab;
+    --color-danger-soft: #3d1512;
+    --color-danger-contrast: #2b0705;
+    --color-inconclusive: #c3b5f5;
+    --color-inconclusive-soft: #2a2440;
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 6px 24px rgb(0 0 0 / 0.35);
+  }
+}

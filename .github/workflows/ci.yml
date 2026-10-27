@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, type-check, test and build
+    runs-on: ubuntu-latest
+    steps:
+      # Actions are pinned to full commit SHAs (release tag in the comment).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies (lockfile only)
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Test with coverage thresholds
+        run: npm run test:coverage
+
+      - name: Build
+        run: npm run build
+
+      - name: Audit runtime dependencies
+        run: npm audit --omit=dev --audit-level=moderate
+
+  pdfid-parity:
+    name: Compare with pdfid.py 0.2.10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Download the pinned reference implementation
+        run: |
+          mkdir -p .pdfid
+          curl --fail --silent --show-error --location --output .pdfid/pdfid.py \
+            https://raw.githubusercontent.com/DidierStevens/DidierStevensSuite/104bb4fe77e24f0891a954af349449227d06f77d/pdfid.py
+          echo "e958a01f1c2596470f27d3c308061b85d7059ff476a58d74f1957a71b4f1248f  .pdfid/pdfid.py" | sha256sum --check -
+
+      - name: Run live parity tests
+        run: npm run test:parity
+        env:
+          PDFID_PY: ${{ github.workspace }}/.pdfid/pdfid.py
