@@ -233,6 +233,12 @@ export interface DeepScanResult {
   readonly decompressionBombs: number;
   /** PDFiD keywords counted inside decompressed object streams (non-zero counts only). */
   readonly hiddenKeywords: readonly HiddenKeywordCount[];
+  /**
+   * How often each PDFiD name keyword (without the slash) occurs in the parsed document
+   * structure, as a dictionary key or name value. Keywords that PDFiD counts but that never
+   * occur here only appear inside stream data (images, fonts, …), where they have no effect.
+   */
+  readonly structuralNames: Readonly<Record<string, number>>;
   readonly actions: readonly ActionSummary[];
   /** References to objects that could not be found while resolving actions. */
   readonly unresolvedReferences: number;

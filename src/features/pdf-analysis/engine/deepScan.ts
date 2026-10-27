@@ -105,18 +105,6 @@ const ACTION_RISK: Readonly<Record<string, ActionRisk>> = {
   Unresolved: 'medium',
 };
 
-/** Action types that only navigate or change the view. */
-const NAVIGATION = new Set([
-  'Destination',
-  'GoTo',
-  'GoTo3DView',
-  'Named',
-  'Thread',
-  'SetOCGState',
-  'Trans',
-  'Hide',
-]);
-
 const EXECUTABLE_EXTENSIONS = [
   '.exe',
   '.com',
@@ -315,6 +303,13 @@ interface ClassifiedAction {
   readonly target: TargetKind | null;
 }
 
+/** PDFiD name keywords (without the slash) tracked in the parsed structure. */
+const STRUCTURAL_KEYWORDS = new Set(
+  PDFID_KEYWORDS.filter((keyword) => keyword.name.startsWith('/')).map((keyword) =>
+    keyword.name.slice(1),
+  ),
+);
+
 const TRAILER = latin1ToBytes('trailer');
 const MAX_TRAILERS = 1_000;
 const MAX_ACTIONS_PER_SOURCE = 64;
@@ -369,6 +364,7 @@ class DeepScanner {
   private scriptsUndecodable = 0;
   private scriptBytesTotal = 0;
   private xfaScripts = 0;
+  private readonly structuralNames = new Map<string, number>();
 
   constructor(bytes: Uint8Array, options: DeepScanOptions) {
     this.bytes = bytes;
@@ -635,9 +631,20 @@ class DeepScanner {
           stack.push(...value.items);
         } else if (value?.type === 'dict') {
           this.inspectDictionary(value, hidden);
+          for (const key of value.entries.keys()) {
+            this.countStructuralName(key);
+          }
           stack.push(...value.entries.values());
+        } else if (value?.type === 'name') {
+          this.countStructuralName(value.value);
         }
       }
+    }
+  }
+
+  private countStructuralName(name: string): void {
+    if (STRUCTURAL_KEYWORDS.has(name)) {
+      this.structuralNames.set(name, (this.structuralNames.get(name) ?? 0) + 1);
     }
   }
 
@@ -1067,6 +1074,7 @@ class DeepScanner {
       objectStreamsIncomplete: this.objectStreamsIncomplete,
       decompressionBombs: this.decompressionBombs,
       hiddenKeywords,
+      structuralNames: Object.fromEntries(this.structuralNames),
       actions: [...this.actions.values()].sort(
         (left, right) =>
           RISK_RANK[right.risk] - RISK_RANK[left.risk] ||
@@ -1101,10 +1109,6 @@ class DeepScanner {
       notes: [...this.notes],
     };
   }
-}
-
-export function isNavigationAction(action: string): boolean {
-  return NAVIGATION.has(action);
 }
 
 /** Runs the deep analysis. Never throws for malformed input; see DeepScanResult.status. */

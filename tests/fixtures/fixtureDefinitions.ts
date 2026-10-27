@@ -678,6 +678,18 @@ export const FIXTURES: readonly FixtureDefinition[] = [
       }),
     expectedCounts: { '/JavaScript': 0 },
   },
+  {
+    id: 'many-distinct-names',
+    description: 'More distinct names than the all-names list retains (2,100 versus 2,000)',
+    build: () =>
+      createTestPdf({
+        objects: withCatalogEntries('', [
+          {
+            body: `<< ${Array.from({ length: 2100 }, (_, index) => `/N${index} ${index}`).join(' ')} >>`,
+          },
+        ]),
+      }),
+  },
 ];
 
 export function getFixture(id: string): FixtureDefinition {

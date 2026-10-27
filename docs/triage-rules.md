@@ -39,6 +39,17 @@ Every definition of an object is analysed. When a PDF defines the same object mo
 (incremental updates, or a decoy placed after the real object), the most dangerous
 interpretation counts.
 
+## Keywords that only occur in stream data
+
+PDFiD counts keywords wherever their bytes appear, including inside compressed images, fonts,
+text and comments. Real documents produce such matches by chance: the bytes `/JS` occur in
+binary image data, and a page about PDF security may contain the text `/JavaScript`. When the
+deep analysis completed, found no encryption and inspected every object stream, a keyword that
+it never saw as a dictionary key or name value is reported as context ("not used in the
+document structure") instead of a review finding, and it does not count towards the
+`/OpenAction` + JavaScript fallback. If any of those conditions fails, the keyword keeps its
+normal severity.
+
 ## Overall result
 
 | Result                                              | Condition                                   |

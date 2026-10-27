@@ -21,6 +21,7 @@ const FAILED_DEEP_SCAN: DeepScanResult = {
   objectStreamsIncomplete: 0,
   decompressionBombs: 0,
   hiddenKeywords: [],
+  structuralNames: {},
   actions: [],
   unresolvedReferences: 0,
   launchTargets: { executable: 0, other: 0 },

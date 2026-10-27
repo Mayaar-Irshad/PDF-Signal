@@ -329,3 +329,50 @@ describe('assessIndicators with deep analysis', () => {
     expect(assessment.visibilityLimits.join(' ')).toMatch(/could not be decoded/);
   });
 });
+
+describe('keywords that only occur in stream data', () => {
+  it('downgrades keywords that never occur in the document structure', async () => {
+    const assessment = assessIndicators(
+      await analyzePdf(getFixture('keywords-in-stream-data').build()),
+    );
+    expect(assessment.level).toBe('none-detected');
+    const status = (name: string) => assessment.interpretations.find((item) => item.name === name);
+    expect(status('/JavaScript')).toMatchObject({ status: 'informational' });
+    expect(status('/JavaScript')?.text).toMatch(/only inside stream data, strings or comments/);
+    expect(assessment.findings.find((finding) => finding.id === 'javascript')).toMatchObject({
+      severity: 'informational',
+    });
+  });
+
+  it('downgrades /JS bytes that happen to occur in binary image data', async () => {
+    const image = bytes([0x89, 0x10], '/JS ', [0xff, 0x00, 0x7f], '/AA ', [0x01]);
+    const pdf = createTestPdf({
+      objects: [...BASIC_OBJECTS, { body: '<< /Type /XObject /Subtype /Image >>', stream: image }],
+    });
+    const scan = await analyzePdf(pdf);
+    expect(scan.keywords.find((keyword) => keyword.name === '/JS')?.count).toBe(1);
+    expect(assessIndicators(scan).level).toBe('none-detected');
+  });
+
+  it('never downgrades when the deep analysis was incomplete', async () => {
+    const pdf = createTestPdf({
+      objects: [
+        ...BASIC_OBJECTS,
+        { body: '<< /Length 20 >>', stream: 'BT /JavaScript ET' },
+        { body: '<< /Type /ObjStm /N 1 /First 4 /Filter /FlateDecode >>', stream: 'not zlib' },
+      ],
+    });
+    const assessment = assessIndicators(await analyzePdf(pdf));
+    expect(assessment.findings.find((finding) => finding.id === 'javascript')?.severity).toBe(
+      'review',
+    );
+    expect(assessment.level).not.toBe('none-detected');
+  });
+
+  it('keeps real script keys at review or higher', async () => {
+    const assessment = assessIndicators(await analyzePdf(getFixture('form-field-script').build()));
+    expect(assessment.findings.find((finding) => finding.id === 'javascript')?.severity).toBe(
+      'review',
+    );
+  });
+});

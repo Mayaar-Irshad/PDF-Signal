@@ -193,16 +193,22 @@ interface ActionFacts {
   readonly triggered: (prefix: string) => readonly ActionSummary[];
 }
 
-function actionFacts(deep: DeepScanResult | null, counts: Counts): ActionFacts | null {
+function actionFacts(
+  deep: DeepScanResult | null,
+  counts: Counts,
+  streamOnly: ReadonlySet<string>,
+): ActionFacts | null {
   if (deep === null || deep.status === 'failed') {
     return null;
   }
   const automatic = deep.actions.filter((action) => action.automatic);
   const triggered = (prefix: string) =>
     deep.actions.filter((action) => action.trigger.startsWith(prefix));
-  // Trust the resolved actions only if every /OpenAction and /AA the keyword scan saw was found.
+  // Trust the resolved actions only if every /OpenAction and /AA the keyword scan saw in the
+  // document structure was found.
   const accountedFor = AUTOMATIC_TRIGGERS.every(
-    (trigger) => counts.total(trigger) === 0 || triggered(trigger).length > 0,
+    (trigger) =>
+      counts.total(trigger) === 0 || streamOnly.has(trigger) || triggered(trigger).length > 0,
   );
   const runsScript = (action: ActionSummary) =>
     action.action === 'JavaScript' || (action.action === 'Rendition' && action.risk === 'high');
@@ -401,15 +407,50 @@ function deepFindings(
   return findings;
 }
 
+/**
+ * Name keywords that PDFiD counted but that never occur in the parsed document structure: they
+ * only appear inside stream data (compressed images, fonts, …), strings or comments, where they
+ * have no effect.
+ * Only trusted when the deep analysis inspected everything, so incomplete analysis can never
+ * downgrade a keyword.
+ */
+function streamOnlyNames(deep: DeepScanResult | null, counts: Counts): ReadonlySet<string> {
+  if (deep?.status !== 'complete' || deep.objectStreamsIncomplete > 0 || deep.encrypted) {
+    return new Set();
+  }
+  return new Set(
+    REVIEW_INDICATORS.flatMap((rule) => rule.names).filter(
+      (name) =>
+        name.startsWith('/') &&
+        !name.includes(' ') &&
+        counts.total(name) > 0 &&
+        (deep.structuralNames[name.slice(1)] ?? 0) === 0,
+    ),
+  );
+}
+
 function indicatorFindings(
   counts: Counts,
   keywords: readonly KeywordCount[],
   facts: ActionFacts | null,
+  streamOnly: ReadonlySet<string>,
 ): Finding[] {
   const findings: Finding[] = [];
   for (const rule of REVIEW_INDICATORS) {
     const evidence = counts.evidence(rule.names);
     if (evidence.length === 0) {
+      continue;
+    }
+    const counted = rule.names.filter((name) => counts.total(name) > 0);
+    if (counted.every((name) => streamOnly.has(name))) {
+      findings.push({
+        id: rule.id,
+        severity: 'informational',
+        title: `${counted.join(', ')} not used in the document structure`,
+        detail:
+          'PDFiD counts this keyword, but it does not occur in the document structure, only inside stream data (such as compressed images or fonts), strings or comments, where it has no effect.',
+        evidence,
+      });
       continue;
     }
     const primary = rule.names.find((name) => counts.total(name) > 0) ?? rule.names[0] ?? '';
@@ -428,8 +469,9 @@ function indicatorFindings(
     findings.push({ id: rule.id, severity, title, detail, evidence });
   }
 
-  const hasScript = counts.total('/JS') + counts.total('/JavaScript') > 0;
-  const hasAutomatic = counts.total('/OpenAction') + counts.total('/AA') > 0;
+  const structural = (name: string) => counts.total(name) > 0 && !streamOnly.has(name);
+  const hasScript = structural('/JS') || structural('/JavaScript');
+  const hasAutomatic = structural('/OpenAction') || structural('/AA');
   if (facts?.resolved !== true) {
     // Without fully resolved actions, fall back to the keyword combination heuristic, unless
     // the deep analysis already confirmed the behaviour (a critical finding covers it).
@@ -443,11 +485,7 @@ function indicatorFindings(
         evidence: counts.evidence(['/JS', '/JavaScript', '/OpenAction', '/AA']),
       });
     }
-    if (
-      counts.total('/Launch') > 0 &&
-      hasAutomatic &&
-      (facts?.automaticLaunches.length ?? 0) === 0
-    ) {
+    if (structural('/Launch') && hasAutomatic && (facts?.automaticLaunches.length ?? 0) === 0) {
       findings.push({
         id: 'automatic-launch',
         severity: 'priority',
@@ -622,6 +660,7 @@ function interpret(
   facts: ActionFacts | null,
   reviewNames: ReadonlySet<string>,
   deep: DeepScanResult | null,
+  streamOnly: ReadonlySet<string>,
 ): KeywordInterpretation {
   const { name, count, hexcodeCount, kind } = keyword;
   const hiddenCount = counts.hiddenOf(name);
@@ -648,6 +687,14 @@ function interpret(
   }
 
   const hasScript = counts.total('/JS') + counts.total('/JavaScript') > 0;
+  if (streamOnly.has(name)) {
+    return {
+      name,
+      status: 'informational',
+      text: `${text} It occurs only inside stream data, strings or comments, not in the document structure, so it has no effect.`,
+      hiddenCount,
+    };
+  }
   if (name === '/EmbeddedFile' && (deep?.attachments.executable ?? 0) > 0) {
     return {
       name,
@@ -730,11 +777,12 @@ const SEVERITY_RANK: Record<FindingSeverity, number> = {
 /** Assesses a scan result with the documented, deterministic rules above. */
 export function assessIndicators(scan: ScanResult): Assessment {
   const counts = new Counts(scan.keywords, scan.deep);
-  const facts = actionFacts(scan.deep, counts);
+  const streamOnly = streamOnlyNames(scan.deep, counts);
+  const facts = actionFacts(scan.deep, counts, streamOnly);
   const findings = scan.keywordScanPerformed
     ? [
         ...deepFindings(scan.deep, facts, counts),
-        ...indicatorFindings(counts, scan.keywords, facts),
+        ...indicatorFindings(counts, scan.keywords, facts, streamOnly),
         ...structuralFindings(scan, counts),
       ]
     : [];
@@ -765,7 +813,7 @@ export function assessIndicators(scan: ScanResult): Assessment {
       (left, right) => SEVERITY_RANK[right.severity] - SEVERITY_RANK[left.severity],
     ),
     interpretations: scan.keywords.map((keyword) =>
-      interpret(keyword, counts, facts, reviewNames, scan.deep),
+      interpret(keyword, counts, facts, reviewNames, scan.deep, streamOnly),
     ),
     visibilityLimits: visibilityLimitsFor(scan, counts),
     disclaimer: TRIAGE_DISCLAIMER,

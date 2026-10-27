@@ -248,6 +248,8 @@ function isDeepScanResult(value: unknown): boolean {
         RISKS.includes(pattern.severity) &&
         isCount(pattern.scripts),
     ) &&
+    isRecord(value.structuralNames) &&
+    Object.values(value.structuralNames).every(isCount) &&
     isStringList(value.notes)
   );
 }

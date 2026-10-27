@@ -1,5 +1,6 @@
 import { formatNameForDisplay } from '../../src/features/pdf-analysis/engine/decodePdfNames';
 import { WORD_CAPACITY } from '../../src/features/pdf-analysis/engine/scanKeywords';
+import { DEFAULT_SCAN_LIMITS } from '../../src/features/pdf-analysis/engine/scanPdf';
 import type { ScanMode, ScanResult } from '../../src/features/pdf-analysis/types/analysis';
 import type { FixtureDefinition } from '../fixtures/fixtureDefinitions';
 
@@ -114,15 +115,11 @@ export function compareWithReference(
     }
   }
 
-  // Names longer than the retained word buffer are deliberately omitted (resource limit).
-  const referenceNames = (reference.names ?? []).filter(
-    (name) => name.name.length <= WORD_CAPACITY + 1,
-  );
-  const omittedOccurrences = (reference.names ?? [])
-    .filter((name) => name.name.length > WORD_CAPACITY + 1)
-    .reduce((total, name) => total + name.count, 0);
-  const expectedNames = referenceNames.map((name) => ({
+  // Names longer than the retained word buffer, and distinct names beyond the retention cap,
+  // are deliberately omitted (resource limits); every retained name must still match exactly.
+  const allReference = (reference.names ?? []).map((name) => ({
     name: formatNameForDisplay(name.name),
+    raw: name.name,
     count: name.count,
     hexcodeCount: name.hexcodeCount,
   }));
@@ -131,15 +128,39 @@ export function compareWithReference(
     count,
     hexcodeCount,
   }));
-  if (JSON.stringify(actualNames) !== JSON.stringify(expectedNames)) {
-    differences.push(
-      `names differ: pdfid=${JSON.stringify(expectedNames)} engine=${JSON.stringify(actualNames)}`,
-    );
-  }
-  if (result.names.omitted !== omittedOccurrences) {
-    differences.push(
-      `omitted long names: expected ${omittedOccurrences}, engine ${result.names.omitted}`,
-    );
+  const capped = actualNames.length >= DEFAULT_SCAN_LIMITS.maxDistinctNames;
+  if (capped) {
+    const byName = new Map(allReference.map((entry) => [entry.name, entry]));
+    for (const entry of actualNames) {
+      const expected = byName.get(entry.name);
+      if (expected?.count !== entry.count || expected.hexcodeCount !== entry.hexcodeCount) {
+        differences.push(`retained name ${entry.name} does not match pdfid`);
+      }
+    }
+    const retained = new Set(actualNames.map((entry) => entry.name));
+    const omitted = allReference
+      .filter((entry) => !retained.has(entry.name))
+      .reduce((total, entry) => total + entry.count, 0);
+    if (result.names.omitted !== omitted) {
+      differences.push(`omitted names: expected ${omitted}, engine ${result.names.omitted}`);
+    }
+  } else {
+    const expectedNames = allReference
+      .filter((entry) => entry.raw.length <= WORD_CAPACITY + 1)
+      .map(({ name, count, hexcodeCount }) => ({ name, count, hexcodeCount }));
+    if (JSON.stringify(actualNames) !== JSON.stringify(expectedNames)) {
+      differences.push(
+        `names differ: pdfid=${JSON.stringify(expectedNames)} engine=${JSON.stringify(actualNames)}`,
+      );
+    }
+    const omittedOccurrences = allReference
+      .filter((entry) => entry.raw.length > WORD_CAPACITY + 1)
+      .reduce((total, entry) => total + entry.count, 0);
+    if (result.names.omitted !== omittedOccurrences) {
+      differences.push(
+        `omitted long names: expected ${omittedOccurrences}, engine ${result.names.omitted}`,
+      );
+    }
   }
 
   if ((reference.eofCount ?? null) !== (result.eof?.eofCount ?? null)) {

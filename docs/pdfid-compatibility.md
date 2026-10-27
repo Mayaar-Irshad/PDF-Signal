@@ -134,11 +134,11 @@ escapes, a "file ends inside a stream" flag, and the triage assessment.
 
 ## How compatibility was verified
 
-`tests/fixtures/fixtureDefinitions.ts` defines 49 benign synthetic fixtures covering every keyword,
+`tests/fixtures/fixtureDefinitions.ts` defines 50 benign synthetic fixtures covering every keyword,
 hex escapes (valid, malformed, truncated, outside names, decoding to delimiters), case
 variants, word boundaries, keywords in streams, strings and comments, binary and invalid UTF-8
 data, header edge cases, `%%EOF` edge cases, `/Colors` values, dates, long names, truncation,
-empty input, and (for the deep analysis) compressed object streams, script streams, filter
+empty input, more distinct names than the all-names limit, and (for the deep analysis) compressed object streams, script streams, filter
 chains, document-level scripts, launch and URI actions, XFA forms, attachments and network-share and script links.
 
 `scripts/pdfid_reference.py` loads the real pdfid.py from a path given on the command line and
@@ -148,9 +148,21 @@ string, every keyword count and hexcode count, the full all-names list, the `%%E
 after the last `%%EOF`, all byte counts, the three entropy values (tolerance 1e-6, because
 pdfid.py prints six decimals) and the dates.
 
-Result on 2026-10-27 with pdfid.py 0.2.10 and Python 3.9.6: **all 98 comparisons (49 fixtures × 2 modes) agree**. In 93 of them pdfid.py completed and every field matched exactly. In the
+Result on 2026-10-27 with pdfid.py 0.2.10 and Python 3.9.6: **all 100 comparisons (50 fixtures ×
+2 modes) agree**. In 95 of them pdfid.py completed and every field matched exactly. In the
 remaining 5, pdfid.py raised an exception; these are the recorded differences below, and the test
 asserts that pdfid.py does fail on them.
+
+### Real-world check
+
+Synthetic fixtures cannot cover every PDF writer, so the same comparison was also run once,
+locally, on 400 PDFs installed on a macOS machine: system resources (input-method and interface
+artwork), licence documents, and resources bundled with Keynote, Pages, Numbers and a few other
+applications. All 800 comparisons (400 files × 2 modes) agreed with pdfid.py, with the
+documented 2,000-name limit taken into account. Most of these files come from Apple's own PDF
+writers, so the set is less varied than the PDFs found in the wild. They belong to their
+publishers and are not part of the repository, so this check cannot be reproduced from the
+repository alone.
 
 The upstream output is committed as `tests/fixtures/pdfid-reference.json` and checked on every
 test run, so CI does not need Python. The `pdfid-parity` CI job additionally downloads the pinned
@@ -170,7 +182,7 @@ PDFID_PY="$PWD/.pdfid/pdfid.py" UPDATE_PDFID_REFERENCE=1 npm run test:parity
 
 ## Beyond PDFiD: the deep analysis
 
-PDF Signal 1.1 adds a deep analysis that pdfid.py does not perform. It never changes the
+PDF Signal also runs a deep analysis that pdfid.py does not perform. It never changes the
 PDFiD-compatible counts above; its results are reported separately (`ScanResult.deep`, the
 "Actions and scripts" section and the "In object streams" column).
 
@@ -198,7 +210,7 @@ object streams, `-s`/`--search`) after PDFiD; PDF Signal combines both steps for
 | `/Colors` followed by a word with `²`, `³` or `¹` (via `#B2`…) | `ValueError` (`isdigit()` accepts the character, `int()` rejects it)        | Does not count the value; adds a compatibility note                              | `colors-superscript-digit` |
 | Non-ASCII bytes in the header                                  | `repr()` shows printable Latin-1 characters literally                       | Shows every non-ASCII byte as `\xNN`, so only ASCII reaches the interface        | unit test                  |
 | Names longer than 256 bytes                                    | Kept in full                                                                | Not listed in the all-names list (counted as omitted); keyword counts unaffected | `long-names`               |
-| More than 2,000 distinct other names, or more than 200 dates   | Unlimited                                                                   | Extra entries omitted and counted, to bound memory                               | unit tests                 |
+| More than 2,000 distinct other names, or more than 200 dates   | Unlimited                                                                   | Extra entries omitted and counted, to bound memory                               | `many-distinct-names`      |
 | Name display                                                   | Decoded names printed raw                                                   | Non-printable, non-ASCII, delimiter and `#` characters re-escaped as `#xx`       | unit tests                 |
 
 Not differences, but worth knowing: entropy sums may differ from pdfid.py in the last bits
