@@ -63,6 +63,7 @@ describe('App', () => {
       'href',
       '#main',
     );
+    expect(screen.getByRole('contentinfo')).toHaveTextContent('© 2026 Irshad');
   });
 
   it('scans a selected PDF with the real engine and focuses the results', async () => {

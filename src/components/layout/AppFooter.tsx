@@ -17,6 +17,7 @@ export function AppFooter() {
           Static triage only: PDF Signal is not an antivirus product and cannot prove that a file is
           safe or malicious.
         </p>
+        <p className="app-footer__copyright">© 2026 Irshad. Released under the MIT licence.</p>
       </div>
     </footer>
   );
