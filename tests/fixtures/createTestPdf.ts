@@ -1,5 +1,3 @@
-import { deflateSync } from 'node:zlib';
-
 /**
  * Builders for benign, synthetic PDF byte sequences. Strings are converted one byte per
  * character (ISO-8859-1), never through UTF-8, so tests control every byte exactly.
@@ -108,9 +106,72 @@ export const BASIC_OBJECTS: readonly PdfObjectSpec[] = [
   { body: '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>' },
 ];
 
-/** zlib-compresses data, as a FlateDecode stream stores it. */
+/**
+ * zlib-compresses data, as a FlateDecode stream stores it. This is a minimal encoder (fixed
+ * Huffman codes; back-references only for runs of 258 identical bytes) instead of node:zlib,
+ * whose output differs between zlib builds and Node.js versions. Fixtures must be identical on
+ * every platform, because the recorded pdfid.py results describe their exact bytes.
+ */
 export function compress(...parts: BytePart[]): Uint8Array<ArrayBuffer> {
-  return Uint8Array.from(deflateSync(bytes(...parts)));
+  const data = bytes(...parts);
+  const out: number[] = [0x78, 0x01];
+  let bitBuffer = 0;
+  let bitCount = 0;
+  const writeBits = (value: number, length: number): void => {
+    bitBuffer |= value << bitCount;
+    bitCount += length;
+    while (bitCount >= 8) {
+      out.push(bitBuffer & 0xff);
+      bitBuffer >>>= 8;
+      bitCount -= 8;
+    }
+  };
+  // Huffman codes are stored most significant bit first, unlike every other field.
+  const writeCode = (code: number, length: number): void => {
+    let reversed = 0;
+    for (let bit = 0; bit < length; bit += 1) {
+      reversed = (reversed << 1) | ((code >> bit) & 1);
+    }
+    writeBits(reversed, length);
+  };
+  const writeLiteral = (byte: number): void => {
+    if (byte < 144) {
+      writeCode(0x30 + byte, 8);
+    } else {
+      writeCode(0x190 + byte - 144, 9);
+    }
+  };
+
+  writeBits(1, 1); // final block
+  writeBits(1, 2); // fixed Huffman codes
+  let index = 0;
+  while (index < data.length) {
+    const byte = data[index] ?? 0;
+    writeLiteral(byte);
+    index += 1;
+    // Repeat the previous byte 258 times: length code 285, distance code 0 (distance 1).
+    while (
+      index + 258 <= data.length &&
+      data.subarray(index, index + 258).every((b) => b === byte)
+    ) {
+      writeCode(0xc5, 8);
+      writeCode(0, 5);
+      index += 258;
+    }
+  }
+  writeCode(0, 7); // end of block
+  if (bitCount > 0) {
+    out.push(bitBuffer & 0xff);
+  }
+
+  let a = 1;
+  let b = 0;
+  for (const byte of data) {
+    a = (a + byte) % 65521;
+    b = (b + a) % 65521;
+  }
+  out.push(b >>> 8, b & 0xff, a >>> 8, a & 0xff);
+  return Uint8Array.from(out);
 }
 
 /**

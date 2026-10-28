@@ -1,3 +1,4 @@
+import { inflateSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_PARSE_LIMITS,
@@ -256,5 +257,17 @@ describe('object streams', () => {
 
   it('works on data produced by the fixture builder', () => {
     expect(compress('x').length).toBeGreaterThan(0);
+  });
+
+  it('uses a fixture compressor whose output real zlib decodes', () => {
+    const allBytes = Uint8Array.from({ length: 256 }, (_, index) => index);
+    const inputs = [bytes(''), bytes('x'), allBytes, bytes('a'.repeat(259), 'b'.repeat(10_000))];
+    for (const input of inputs) {
+      expect(Buffer.from(inflateSync(compress(input))).equals(input)).toBe(true);
+    }
+    const zeros = new Uint8Array(2 * 1024 * 1024);
+    const packed = compress(zeros);
+    expect(packed.length).toBeLessThan(20_000);
+    expect(Buffer.from(inflateSync(packed)).equals(zeros)).toBe(true);
   });
 });

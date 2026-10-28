@@ -4451,9 +4451,9 @@
     "nonStreamBytes": 509,
     "nonStreamEntropy": 4.800497,
     "streamBytes": 71,
-    "streamEntropy": 3.773323,
+    "streamEntropy": 3.758696,
     "totalBytes": 580,
-    "totalEntropy": 4.9049
+    "totalEntropy": 4.898121
    },
    "standard": {
     "bytesAfterLastEof": 0,
@@ -4643,9 +4643,9 @@
     "nonStreamBytes": 509,
     "nonStreamEntropy": 4.800497,
     "streamBytes": 71,
-    "streamEntropy": 3.773323,
+    "streamEntropy": 3.758696,
     "totalBytes": 580,
-    "totalEntropy": 4.9049
+    "totalEntropy": 4.898121
    }
   },
   "form-field-script.pdf": {
@@ -34424,6 +34424,11 @@
      {
       "count": 1,
       "hexcodeCount": 0,
+      "name": "/H"
+     },
+     {
+      "count": 1,
+      "hexcodeCount": 0,
       "name": "/Kids"
      },
      {
@@ -34463,11 +34468,11 @@
      }
     ],
     "nonStreamBytes": 361,
-    "nonStreamEntropy": 4.79377,
-    "streamBytes": 126,
-    "streamEntropy": 6.584345,
-    "totalBytes": 487,
-    "totalEntropy": 5.894564
+    "nonStreamEntropy": 4.79478,
+    "streamBytes": 139,
+    "streamEntropy": 5.626759,
+    "totalBytes": 500,
+    "totalEntropy": 5.631027
    },
    "standard": {
     "bytesAfterLastEof": 0,
@@ -34606,6 +34611,11 @@
      {
       "count": 1,
       "hexcodeCount": 0,
+      "name": "/H"
+     },
+     {
+      "count": 1,
+      "hexcodeCount": 0,
       "name": "/Kids"
      },
      {
@@ -34645,11 +34655,11 @@
      }
     ],
     "nonStreamBytes": 361,
-    "nonStreamEntropy": 4.79377,
-    "streamBytes": 126,
-    "streamEntropy": 6.584345,
-    "totalBytes": 487,
-    "totalEntropy": 5.894564
+    "nonStreamEntropy": 4.79478,
+    "streamBytes": 139,
+    "streamEntropy": 5.626759,
+    "totalBytes": 500,
+    "totalEntropy": 5.631027
    }
   },
   "openaction-destination.pdf": {
@@ -35179,12 +35189,12 @@
       "name": "/Type"
      }
     ],
-    "nonStreamBytes": 508,
-    "nonStreamEntropy": 4.749846,
-    "streamBytes": 96,
-    "streamEntropy": 6.290539,
-    "totalBytes": 604,
-    "totalEntropy": 5.468553
+    "nonStreamBytes": 509,
+    "nonStreamEntropy": 4.742891,
+    "streamBytes": 107,
+    "streamEntropy": 5.398806,
+    "totalBytes": 616,
+    "totalEntropy": 5.379219
    },
    "standard": {
     "bytesAfterLastEof": 0,
@@ -35366,12 +35376,12 @@
       "name": "/Type"
      }
     ],
-    "nonStreamBytes": 508,
-    "nonStreamEntropy": 4.749846,
-    "streamBytes": 96,
-    "streamEntropy": 6.290539,
-    "totalBytes": 604,
-    "totalEntropy": 5.468553
+    "nonStreamBytes": 509,
+    "nonStreamEntropy": 4.742891,
+    "streamBytes": 107,
+    "streamEntropy": 5.398806,
+    "totalBytes": 616,
+    "totalEntropy": 5.379219
    }
   },
   "openaction-uri.pdf": {
@@ -37568,6 +37578,11 @@
      {
       "count": 1,
       "hexcodeCount": 0,
+      "name": "/I"
+     },
+     {
+      "count": 1,
+      "hexcodeCount": 0,
       "name": "/Kids"
      },
      {
@@ -37579,6 +37594,11 @@
       "count": 1,
       "hexcodeCount": 0,
       "name": "/MediaBox"
+     },
+     {
+      "count": 1,
+      "hexcodeCount": 0,
+      "name": "/N"
      },
      {
       "count": 2,
@@ -37607,11 +37627,11 @@
      }
     ],
     "nonStreamBytes": 452,
-    "nonStreamEntropy": 4.785087,
-    "streamBytes": 153,
-    "streamEntropy": 6.767064,
-    "totalBytes": 605,
-    "totalEntropy": 5.903825
+    "nonStreamEntropy": 4.782464,
+    "streamBytes": 204,
+    "streamEntropy": 5.43724,
+    "totalBytes": 656,
+    "totalEntropy": 5.765064
    },
    "standard": {
     "bytesAfterLastEof": 0,
@@ -37750,6 +37770,11 @@
      {
       "count": 1,
       "hexcodeCount": 0,
+      "name": "/I"
+     },
+     {
+      "count": 1,
+      "hexcodeCount": 0,
       "name": "/Kids"
      },
      {
@@ -37761,6 +37786,11 @@
       "count": 1,
       "hexcodeCount": 0,
       "name": "/MediaBox"
+     },
+     {
+      "count": 1,
+      "hexcodeCount": 0,
+      "name": "/N"
      },
      {
       "count": 2,
@@ -37789,11 +37819,11 @@
      }
     ],
     "nonStreamBytes": 452,
-    "nonStreamEntropy": 4.785087,
-    "streamBytes": 153,
-    "streamEntropy": 6.767064,
-    "totalBytes": 605,
-    "totalEntropy": 5.903825
+    "nonStreamEntropy": 4.782464,
+    "streamBytes": 204,
+    "streamEntropy": 5.43724,
+    "totalBytes": 656,
+    "totalEntropy": 5.765064
    }
   }
  },

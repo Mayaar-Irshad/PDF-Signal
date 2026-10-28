@@ -31,7 +31,11 @@ export class FakeWorker implements WorkerLike {
 
   fail(): void {
     if (!this.terminated) {
-      this.onerror?.(new ErrorEvent('error', { cancelable: true, message: 'simulated failure' }));
+      // ErrorEvent is not a global in every Node.js version, so build an equivalent event.
+      const event = Object.assign(new Event('error', { cancelable: true }), {
+        message: 'simulated failure',
+      });
+      this.onerror?.(event as ErrorEvent);
     }
   }
 }

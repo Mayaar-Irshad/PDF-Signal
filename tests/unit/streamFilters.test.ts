@@ -1,3 +1,4 @@
+import { deflateSync } from 'node:zlib';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { parseValue, PdfLexer } from '../../src/features/pdf-analysis/engine/pdfObjects';
 import {
@@ -35,7 +36,8 @@ describe('inflateBounded', () => {
   });
 
   it('stops a decompression bomb at the output cap', async () => {
-    const bomb = compress(new Uint8Array(4 * 1024 * 1024));
+    // Real zlib, for an attacker's compression ratio; these bytes are not compared with pdfid.py.
+    const bomb = Uint8Array.from(deflateSync(new Uint8Array(4 * 1024 * 1024), { level: 9 }));
     expect(bomb.length).toBeLessThan(10_000);
     const result = await inflateBounded(bomb, 64 * 1024);
     expect(result.status).toBe('truncated');

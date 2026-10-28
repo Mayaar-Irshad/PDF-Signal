@@ -12,7 +12,7 @@ deep analysis that finds what keyword scanners miss, all running locally in your
 
 ![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![React 19](https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-650%20passing-2ea043)
+![Tests](https://img.shields.io/badge/tests-651%20passing-2ea043)
 ![PDFiD parity](https://img.shields.io/badge/pdfid.py%200.2.10-parity%20verified-0b7a6e)
 ![No backend](https://img.shields.io/badge/backend-none-6e7781)
 ![License MIT](https://img.shields.io/badge/license-MIT-blue)
@@ -224,7 +224,7 @@ changes with `npm run build && npm run preview`.
 
 ## Testing and quality
 
-- **650 tests** (Vitest + React Testing Library) pass, plus 2 live pdfid.py tests that run only
+- **651 tests** (Vitest + React Testing Library) pass, plus 2 live pdfid.py tests that run only
   when `PDFID_PY` is set: unit tests for every engine module, integration tests through the real
   worker handler, component and full-flow tests in jsdom, and the recorded pdfid.py parity suite.
 - Benign synthetic fixtures built byte by byte; no real malware is used or committed.
