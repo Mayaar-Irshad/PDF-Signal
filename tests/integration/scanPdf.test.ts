@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { APP_CONFIG } from '../../src/config/appConfig';
 import { computeSha256Hex } from '../../src/features/pdf-analysis/engine/hash';
 import { ENGINE_INFO, scanPdf } from '../../src/features/pdf-analysis/engine/scanPdf';
 import type { ScanResult } from '../../src/features/pdf-analysis/types/analysis';
@@ -198,17 +199,19 @@ describe('scanPdf result', () => {
     expect(pdf).toEqual(copy);
   });
 
-  it('scans a 10 MB file in a reasonable time', () => {
+  it('scans a file of the maximum size well within the scan timeout', () => {
     const large = createTestPdf({
       objects: [
         ...BASIC_OBJECTS,
-        { body: '<< >>', stream: new Uint8Array(10 * 1024 * 1024).fill(0x41) },
+        { body: '<< >>', stream: new Uint8Array(APP_CONFIG.maxFileSizeBytes).fill(0x41) },
       ],
     });
     const started = performance.now();
     const result = scanPdf(large, { sha256: 'x' });
     expect(result.keywords.find((keyword) => keyword.name === 'obj')?.count).toBe(4);
-    expect(performance.now() - started).toBeLessThan(5000);
+    // Shared CI machines with coverage enabled take 2–6 s for this; a laptop takes about 0.5 s.
+    // A super-linear slowdown, which this test guards against, would take minutes.
+    expect(performance.now() - started).toBeLessThan(APP_CONFIG.scanTimeoutMs / 3);
   });
 });
 
